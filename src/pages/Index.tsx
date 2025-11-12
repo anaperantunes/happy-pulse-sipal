@@ -6,6 +6,8 @@ import { HappinessChart } from "@/components/dashboard/HappinessChart";
 import { ImpactChart } from "@/components/dashboard/ImpactChart";
 import { UnitDistributionChart } from "@/components/dashboard/UnitDistributionChart";
 import { WordCloudChart } from "@/components/dashboard/WordCloudChart";
+import { HappinessFactorsChart } from "@/components/dashboard/HappinessFactorsChart";
+import { UnhappinessFactorsChart } from "@/components/dashboard/UnhappinessFactorsChart";
 import { FilterPanel } from "@/components/dashboard/FilterPanel";
 import { FileUpload } from "@/components/dashboard/FileUpload";
 import { SurveyResponse } from "@/types/survey";
@@ -155,6 +157,11 @@ const Index = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <UnitDistributionChart data={processedData.unitDistribution} />
                   <WordCloudChart data={processedData.wordFrequency} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <HappinessFactorsChart data={processedData.happinessFactors} />
+                  <UnhappinessFactorsChart data={processedData.unhappinessFactors} />
                 </div>
               </>}
           </div>}

@@ -15,4 +15,6 @@ export interface ProcessedData {
   impactDistribution: { impacto: string; count: number }[];
   unitDistribution: { unidade: string; count: number }[];
   wordFrequency: { text: string; value: number }[];
+  happinessFactors: { fator: string; count: number }[];
+  unhappinessFactors: { fator: string; count: number }[];
 }

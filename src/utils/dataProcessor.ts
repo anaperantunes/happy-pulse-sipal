@@ -79,12 +79,40 @@ export function processData(responses: SurveyResponse[]): ProcessedData {
     responses.map(r => r.comentarios).filter(c => c && c.trim() !== '')
   );
   
+  // Process happiness factors (positive factors)
+  const happinessFactorCount: { [key: string]: number } = {};
+  responses.forEach(r => {
+    if (r.fatoresPositivos && r.fatoresPositivos.trim() !== '') {
+      happinessFactorCount[r.fatoresPositivos] = (happinessFactorCount[r.fatoresPositivos] || 0) + 1;
+    }
+  });
+  
+  const happinessFactors = Object.entries(happinessFactorCount)
+    .map(([fator, count]) => ({ fator, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  
+  // Process unhappiness factors (negative factors)
+  const unhappinessFactorCount: { [key: string]: number } = {};
+  responses.forEach(r => {
+    if (r.fatoresNegativos && r.fatoresNegativos.trim() !== '') {
+      unhappinessFactorCount[r.fatoresNegativos] = (unhappinessFactorCount[r.fatoresNegativos] || 0) + 1;
+    }
+  });
+  
+  const unhappinessFactors = Object.entries(unhappinessFactorCount)
+    .map(([fator, count]) => ({ fator, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  
   return {
     responses,
     averageHappiness,
     happinessDistribution,
     impactDistribution,
     unitDistribution,
-    wordFrequency
+    wordFrequency,
+    happinessFactors,
+    unhappinessFactors
   };
 }
