@@ -22,10 +22,10 @@ import {
 const surveyResponseSchema = z.object({
   local: z.string().trim().min(1, "Local é obrigatório").max(200, "Local muito longo"),
   felicidade: z.number().int().min(1, "Felicidade deve ser entre 1 e 5").max(5, "Felicidade deve ser entre 1 e 5"),
-  fatoresPositivos: z.string().max(1000, "Fatores positivos muito longos").optional(),
-  fatoresNegativos: z.string().max(1000, "Fatores negativos muito longos").optional(),
-  impacto: z.string().max(200, "Impacto muito longo").optional(),
-  comentarios: z.string().max(2000, "Comentários muito longos").optional(),
+  fatoresPositivos: z.string().max(5000, "Fatores positivos muito longos").optional(),
+  fatoresNegativos: z.string().max(5000, "Fatores negativos muito longos").optional(),
+  impacto: z.string().max(500, "Impacto muito longo").optional(),
+  comentarios: z.string().max(10000, "Comentários muito longos").optional(),
   tipo_unidade: z.enum(["Matriz", "Filial"], { errorMap: () => ({ message: "Tipo de unidade inválido" }) })
 });
 
