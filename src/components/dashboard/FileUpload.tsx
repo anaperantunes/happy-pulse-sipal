@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import { SurveyResponse } from "@/types/survey";
 import { parseHappinessLevel } from "@/utils/dataProcessor";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FileUploadProps {
   onDataLoaded: (data: SurveyResponse[], timestamp: string) => void;
@@ -14,12 +15,12 @@ interface FileUploadProps {
 export function FileUpload({ onDataLoaded, compact = false }: FileUploadProps) {
   const { toast } = useToast();
 
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
@@ -50,16 +51,45 @@ export function FileUpload({ onDataLoaded, compact = false }: FileUploadProps) {
         });
 
         if (allResponses.length > 0) {
+          // Delete existing data
+          await supabase.from('survey_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          
+          // Insert new responses into database
+          const { error: insertError } = await supabase
+            .from('survey_responses')
+            .insert(allResponses.map(r => ({
+              local: r.local,
+              felicidade: r.felicidade,
+              fatores_positivos: r.fatoresPositivos,
+              fatores_negativos: r.fatoresNegativos,
+              impacto: r.impacto,
+              comentarios: r.comentarios,
+              tipo_unidade: r.tipo_unidade
+            })));
+
+          if (insertError) {
+            throw insertError;
+          }
+
+          // Update metadata
+          await supabase.from('survey_metadata').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          const { error: metadataError } = await supabase
+            .from('survey_metadata')
+            .insert({
+              last_updated: new Date().toISOString(),
+              total_responses: allResponses.length
+            });
+
+          if (metadataError) {
+            throw metadataError;
+          }
+
           const timestamp = new Date().toISOString();
-          
-          // Save to localStorage
-          localStorage.setItem('surveyData', JSON.stringify(allResponses));
-          localStorage.setItem('surveyDataTimestamp', timestamp);
-          
           onDataLoaded(allResponses, timestamp);
+          
           toast({
             title: "Arquivo carregado!",
-            description: `${allResponses.length} respostas processadas com sucesso.`,
+            description: `${allResponses.length} respostas salvas no banco de dados.`,
           });
         } else {
           toast({

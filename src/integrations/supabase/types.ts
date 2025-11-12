@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      survey_metadata: {
+        Row: {
+          id: string
+          last_updated: string
+          total_responses: number
+          uploaded_by: string | null
+        }
+        Insert: {
+          id?: string
+          last_updated?: string
+          total_responses?: number
+          uploaded_by?: string | null
+        }
+        Update: {
+          id?: string
+          last_updated?: string
+          total_responses?: number
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      survey_responses: {
+        Row: {
+          comentarios: string | null
+          created_at: string
+          fatores_negativos: string | null
+          fatores_positivos: string | null
+          felicidade: number
+          id: string
+          impacto: string | null
+          local: string
+          tipo_unidade: string
+        }
+        Insert: {
+          comentarios?: string | null
+          created_at?: string
+          fatores_negativos?: string | null
+          fatores_positivos?: string | null
+          felicidade: number
+          id?: string
+          impacto?: string | null
+          local: string
+          tipo_unidade: string
+        }
+        Update: {
+          comentarios?: string | null
+          created_at?: string
+          fatores_negativos?: string | null
+          fatores_positivos?: string | null
+          felicidade?: number
+          id?: string
+          impacto?: string | null
+          local?: string
+          tipo_unidade?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

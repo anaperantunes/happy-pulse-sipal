@@ -10,26 +10,55 @@ import { FilterPanel } from "@/components/dashboard/FilterPanel";
 import { FileUpload } from "@/components/dashboard/FileUpload";
 import { SurveyResponse } from "@/types/survey";
 import { processData } from "@/utils/dataProcessor";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<string>("all");
   const [lastUpdate, setLastUpdate] = useState<string>("");
 
-  // Load saved data on mount
+  // Load data from database on mount
   useEffect(() => {
-    const savedData = localStorage.getItem('surveyData');
-    const savedTimestamp = localStorage.getItem('surveyDataTimestamp');
-    
-    if (savedData && savedTimestamp) {
+    const loadData = async () => {
       try {
-        const parsedData = JSON.parse(savedData);
-        setResponses(parsedData);
-        setLastUpdate(savedTimestamp);
+        const { data: responses, error: responsesError } = await supabase
+          .from('survey_responses')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (responsesError) throw responsesError;
+
+        const { data: metadata, error: metadataError } = await supabase
+          .from('survey_metadata')
+          .select('*')
+          .order('last_updated', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (metadataError && metadataError.code !== 'PGRST116') {
+          throw metadataError;
+        }
+
+        if (responses && responses.length > 0) {
+          const formattedResponses: SurveyResponse[] = responses.map(r => ({
+            local: r.local,
+            felicidade: r.felicidade,
+            fatoresPositivos: r.fatores_positivos || "",
+            fatoresNegativos: r.fatores_negativos || "",
+            impacto: r.impacto || "",
+            comentarios: r.comentarios || "",
+            tipo_unidade: r.tipo_unidade as "Filial" | "Matriz"
+          }));
+
+          setResponses(formattedResponses);
+          setLastUpdate(metadata?.last_updated || new Date().toISOString());
+        }
       } catch (error) {
-        console.error('Error loading saved data:', error);
+        console.error('Error loading data:', error);
       }
-    }
+    };
+
+    loadData();
   }, []);
 
   const handleDataLoaded = (data: SurveyResponse[], timestamp: string) => {
@@ -87,22 +116,21 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 pb-16">
+      <main className="container mx-auto px-4 py-8 pb-20">
         {responses.length === 0 ? (
           <div className="max-w-2xl mx-auto">
             <FileUpload onDataLoaded={handleDataLoaded} />
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Filters and Update Button */}
-            <div className="flex items-center justify-between gap-4">
+            {/* Filters */}
+            <div className="flex items-center justify-start gap-4">
               <div className="max-w-xs">
                 <FilterPanel
                   selectedUnit={selectedUnit}
                   onUnitChange={setSelectedUnit}
                 />
               </div>
-              <FileUpload onDataLoaded={handleDataLoaded} compact />
             </div>
 
             {/* KPI Cards */}
@@ -149,13 +177,16 @@ const Index = () => {
         )}
       </main>
 
-      {/* Footer with last update info */}
-      {lastUpdate && (
+      {/* Footer with last update info and update button */}
+      {responses.length > 0 && (
         <footer className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-sm border-t border-border/50 py-2">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              <span>Última atualização: {formatLastUpdate(lastUpdate)}</span>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                <span>Última atualização: {formatLastUpdate(lastUpdate)}</span>
+              </div>
+              <FileUpload onDataLoaded={handleDataLoaded} compact />
             </div>
           </div>
         </footer>
