@@ -11,19 +11,19 @@ interface FilterPanelProps {
 export function FilterPanel({ selectedUnit, onUnitChange }: FilterPanelProps) {
   return (
     <Card className="shadow-sm border-primary/20">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-foreground">Filtros</h3>
+      <CardContent className="pt-3 pb-3">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Filter className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-sm text-foreground">Filtros</h3>
         </div>
         
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="unit-filter" className="text-sm font-medium">
+        <div className="space-y-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="unit-filter" className="text-xs font-medium">
               Unidade
             </Label>
             <Select value={selectedUnit} onValueChange={onUnitChange}>
-              <SelectTrigger id="unit-filter">
+              <SelectTrigger id="unit-filter" className="h-8 text-sm">
                 <SelectValue placeholder="Selecione a unidade" />
               </SelectTrigger>
               <SelectContent>
