@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Heart, TrendingUp, Users, MessageSquare, Calendar } from "lucide-react";
+import { Heart, TrendingUp, Users, MessageSquare, Calendar, LogOut } from "lucide-react";
 import logoSipal from "@/assets/logo-sipal.png";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { HappinessChart } from "@/components/dashboard/HappinessChart";
@@ -10,27 +10,62 @@ import { FilterPanel } from "@/components/dashboard/FilterPanel";
 import { FileUpload } from "@/components/dashboard/FileUpload";
 import { SurveyResponse } from "@/types/survey";
 import { processData } from "@/utils/dataProcessor";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { AuthDialog } from "@/components/auth/AuthDialog";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<string>("all");
   const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const { user, loading: authLoading, signOut } = useAuth();
 
-  // Load saved data on mount
+  // Load data from Supabase
   useEffect(() => {
-    const savedData = localStorage.getItem('surveyData');
-    const savedTimestamp = localStorage.getItem('surveyDataTimestamp');
-    
-    if (savedData && savedTimestamp) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        setResponses(parsedData);
-        setLastUpdate(savedTimestamp);
-      } catch (error) {
-        console.error('Error loading saved data:', error);
+    if (!user) return;
+
+    const loadData = async () => {
+      // Load responses
+      const { data: responsesData, error: responsesError } = await supabase
+        .from('survey_responses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (responsesError) {
+        console.error('Error loading responses:', responsesError);
+        return;
       }
-    }
-  }, []);
+
+      // Load metadata
+      const { data: metadataData, error: metadataError } = await supabase
+        .from('survey_metadata')
+        .select('*')
+        .order('last_updated', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!metadataError && metadataData) {
+        setLastUpdate(metadataData.last_updated);
+      }
+
+      if (responsesData) {
+        const mappedResponses: SurveyResponse[] = responsesData.map(r => ({
+          local: r.local,
+          felicidade: r.felicidade,
+          fatoresPositivos: r.fatores_positivos || "",
+          fatoresNegativos: r.fatores_negativos || "",
+          impacto: r.impacto || "",
+          comentarios: r.comentarios || "",
+          tipo_unidade: r.tipo_unidade as "Matriz" | "Filial",
+        }));
+        setResponses(mappedResponses);
+      }
+    };
+
+    loadData();
+  }, [user]);
 
   const handleDataLoaded = (data: SurveyResponse[], timestamp: string) => {
     setResponses(data);
@@ -64,6 +99,36 @@ const Index = () => {
     ? ((processedData.happinessDistribution.filter(h => h.nivel >= 4).reduce((sum, h) => sum + h.count, 0) / totalResponses) * 100).toFixed(1)
     : "0.0";
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/30 to-background">
+          <div className="text-center space-y-4 max-w-md">
+            <img src={logoSipal} alt="Logo SIPAL" className="h-20 mx-auto mb-6" />
+            <h1 className="text-3xl font-bold text-primary">
+              Pesquisa de Felicidade no Trabalho
+            </h1>
+            <p className="text-muted-foreground">
+              Dashboard SIPAL - Análise em tempo real
+            </p>
+            <Button onClick={() => setShowAuthDialog(true)} size="lg" className="mt-6">
+              Fazer Login
+            </Button>
+          </div>
+        </div>
+        <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background">
       {/* Header */}
@@ -78,11 +143,17 @@ const Index = () => {
                 Dashboard SIPAL - Análise em tempo real
               </p>
             </div>
-            <img 
-              src={logoSipal} 
-              alt="Logo SIPAL" 
-              className="h-16 w-auto object-contain"
-            />
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+              <img 
+                src={logoSipal} 
+                alt="Logo SIPAL" 
+                className="h-16 w-auto object-contain"
+              />
+            </div>
           </div>
         </div>
       </header>

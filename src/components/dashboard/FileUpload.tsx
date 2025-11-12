@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import { SurveyResponse } from "@/types/survey";
 import { parseHappinessLevel } from "@/utils/dataProcessor";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FileUploadProps {
   onDataLoaded: (data: SurveyResponse[], timestamp: string) => void;
@@ -19,7 +20,7 @@ export function FileUpload({ onDataLoaded, compact = false }: FileUploadProps) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
@@ -52,14 +53,39 @@ export function FileUpload({ onDataLoaded, compact = false }: FileUploadProps) {
         if (allResponses.length > 0) {
           const timestamp = new Date().toISOString();
           
-          // Save to localStorage
-          localStorage.setItem('surveyData', JSON.stringify(allResponses));
-          localStorage.setItem('surveyDataTimestamp', timestamp);
+          // Delete old responses
+          await supabase.from('survey_responses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          
+          // Insert new responses to Supabase
+          const { error: insertError } = await supabase
+            .from('survey_responses')
+            .insert(
+              allResponses.map(response => ({
+                local: response.local,
+                felicidade: response.felicidade,
+                fatores_positivos: response.fatoresPositivos,
+                fatores_negativos: response.fatoresNegativos,
+                impacto: response.impacto,
+                comentarios: response.comentarios,
+                tipo_unidade: response.tipo_unidade,
+              }))
+            );
+
+          if (insertError) {
+            throw insertError;
+          }
+
+          // Update metadata
+          await supabase.from('survey_metadata').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('survey_metadata').insert({
+            total_responses: allResponses.length,
+            last_updated: timestamp,
+          });
           
           onDataLoaded(allResponses, timestamp);
           toast({
             title: "Arquivo carregado!",
-            description: `${allResponses.length} respostas processadas com sucesso.`,
+            description: `${allResponses.length} respostas salvas no banco de dados.`,
           });
         } else {
           toast({
