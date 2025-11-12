@@ -10,6 +10,30 @@ interface ImpactChartProps {
   data: { impacto: string; count: number }[];
 }
 
+const CustomizedTick = (props: any) => {
+  const { x, y, payload } = props;
+  const maxLength = 20;
+  const text: string = payload?.value ?? "";
+  const truncated = text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={0}
+        y={0}
+        dy={16}
+        textAnchor="end"
+        fill="hsl(var(--muted-foreground))"
+        transform="rotate(-45)"
+        fontSize={11}
+      >
+        <title>{text}</title>
+        {truncated}
+      </text>
+    </g>
+  );
+};
+
 export function ImpactChart({ data }: ImpactChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   
@@ -70,15 +94,17 @@ export function ImpactChart({ data }: ImpactChartProps) {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sortedData} margin={{ bottom: 60 }}>
+          <BarChart data={sortedData} margin={{ bottom: 80 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 
               dataKey="impacto" 
               angle={-45}
               textAnchor="end"
-              height={80}
+              height={100}
               stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 11 }}
+              interval={0}
+              tickMargin={8}
+              tick={<CustomizedTick />}
             />
             <YAxis stroke="hsl(var(--muted-foreground))" />
             <Tooltip 
