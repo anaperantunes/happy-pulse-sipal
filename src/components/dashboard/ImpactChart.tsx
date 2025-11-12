@@ -38,6 +38,7 @@ export function ImpactChart({ data }: ImpactChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   
   const total = data.reduce((sum, d) => sum + d.count, 0);
+  const maxValue = Math.max(...data.map(d => d.count));
   
   const sortedData = [...data].sort((a, b) => {
     const orderMap: { [key: string]: number } = {
@@ -108,7 +109,7 @@ export function ImpactChart({ data }: ImpactChartProps) {
             />
             <YAxis 
               stroke="hsl(var(--muted-foreground))"
-              domain={[0, 'auto']}
+              domain={[0, maxValue + 15]}
               allowDataOverflow={false}
             />
             <Tooltip 
