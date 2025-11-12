@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { Heart, TrendingUp, Users, MessageSquare, Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Heart, TrendingUp, Users, MessageSquare, Calendar, LogOut } from "lucide-react";
 import logoSipal from "@/assets/logo-sipal.png";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { HappinessChart } from "@/components/dashboard/HappinessChart";
@@ -11,14 +12,70 @@ import { FileUpload } from "@/components/dashboard/FileUpload";
 import { SurveyResponse } from "@/types/survey";
 import { processData } from "@/utils/dataProcessor";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import type { Session } from "@supabase/supabase-js";
 
 const Index = () => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<string>("all");
   const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Check authentication
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (!session) {
+          navigate("/auth");
+        } else {
+          // Check admin role after auth state changes
+          setTimeout(() => {
+            checkAdminRole(session.user.id);
+          }, 0);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        navigate("/auth");
+      } else {
+        checkAdminRole(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Check if user is admin
+  const checkAdminRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .single();
+
+      setIsAdmin(!!data && !error);
+    } catch (error) {
+      setIsAdmin(false);
+    }
+  };
 
   // Load data from database on mount
   useEffect(() => {
+    if (!session) return;
     const loadData = async () => {
       try {
         const { data: responses, error: responsesError } = await supabase
@@ -59,12 +116,41 @@ const Index = () => {
     };
 
     loadData();
-  }, []);
+  }, [session]);
 
   const handleDataLoaded = (data: SurveyResponse[], timestamp: string) => {
     setResponses(data);
     setLastUpdate(timestamp);
   };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Logout realizado com sucesso",
+        description: "Até logo!",
+      });
+      navigate("/auth");
+    } catch (error) {
+      toast({
+        title: "Erro ao fazer logout",
+        description: "Tente novamente",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/30 to-background">
+        <div className="text-center">
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   const formatLastUpdate = (timestamp: string) => {
     if (!timestamp) return "";
@@ -107,11 +193,22 @@ const Index = () => {
                 Dashboard SIPAL - Análise em tempo real
               </p>
             </div>
-            <img 
-              src={logoSipal} 
-              alt="Logo SIPAL" 
-              className="h-16 w-auto object-contain"
-            />
+            <div className="flex items-center gap-4">
+              <img 
+                src={logoSipal} 
+                alt="Logo SIPAL" 
+                className="h-16 w-auto object-contain"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -119,7 +216,15 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8 pb-20">
         {responses.length === 0 ? (
           <div className="max-w-2xl mx-auto">
-            <FileUpload onDataLoaded={handleDataLoaded} />
+            {isAdmin ? (
+              <FileUpload onDataLoaded={handleDataLoaded} />
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  Nenhuma resposta encontrada. Entre em contato com um administrador para fazer upload dos dados.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-8">
@@ -186,7 +291,7 @@ const Index = () => {
                 <Calendar className="h-3 w-3" />
                 <span>Última atualização: {formatLastUpdate(lastUpdate)}</span>
               </div>
-              <FileUpload onDataLoaded={handleDataLoaded} compact />
+              {isAdmin && <FileUpload onDataLoaded={handleDataLoaded} compact />}
             </div>
           </div>
         </footer>
