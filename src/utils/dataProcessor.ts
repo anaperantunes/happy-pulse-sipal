@@ -1,10 +1,58 @@
 import { SurveyResponse, ProcessedData } from "@/types/survey";
 
+// Palavras irrelevantes/genéricas a serem excluídas
 const stopWords = new Set([
   'a', 'o', 'e', 'de', 'da', 'do', 'em', 'um', 'uma', 'os', 'as', 'dos', 'das',
   'para', 'com', 'por', 'no', 'na', 'ao', 'à', 'pelo', 'pela', 'mais', 'que',
   'se', 'não', 'como', 'mas', 'ou', 'quando', 'muito', 'nos', 'eu', 'ele', 'ela',
-  'você', 'ser', 'ter', 'estar', 'fazer', 'ir', 'poder', 'sua', 'seu', 'meu', 'minha'
+  'você', 'ser', 'ter', 'estar', 'fazer', 'ir', 'poder', 'sua', 'seu', 'meu', 'minha',
+  // Palavras genéricas sem valor analítico
+  'empresa', 'trabalho', 'colaborador', 'colaboradores', 'funcionário', 'funcionários',
+  'bom', 'boa', 'bons', 'boas', 'ótimo', 'ótima', 'ótimos', 'ótimas', 'ok', 'sim',
+  'sistema', 'processo', 'processos', 'mudança', 'mudanças', 'coisa', 'coisas',
+  'algo', 'sempre', 'ainda', 'também', 'aqui', 'ali', 'isso', 'essa', 'esse',
+  'área', 'setor', 'parte', 'vez', 'vezes', 'dia', 'dias', 'ano', 'anos',
+  'pode', 'podem', 'deve', 'devem', 'precisa', 'precisam', 'tem', 'têm'
+]);
+
+// Termos relevantes para o plano de ação organizacional
+const relevantTerms = new Set([
+  // Clima e relações interpessoais
+  'ambiente', 'clima', 'relacionamento', 'relacionamentos', 'equipe', 'equipes',
+  'colega', 'colegas', 'convivência', 'integração', 'respeito', 'confiança',
+  
+  // Liderança e gestão
+  'liderança', 'líder', 'líderes', 'gestão', 'gestor', 'gestores', 'gerente',
+  'gerentes', 'supervisor', 'supervisores', 'chefia', 'chefe', 'coordenador',
+  
+  // Reconhecimento e valorização
+  'reconhecimento', 'valorização', 'valorizar', 'reconhecer', 'motivação',
+  'incentivo', 'feedback', 'elogio', 'mérito', 'recompensa',
+  
+  // Comunicação interna
+  'comunicação', 'diálogo', 'informação', 'informações', 'transparência',
+  'clareza', 'alinhamento', 'reunião', 'reuniões',
+  
+  // Carga e ritmo de trabalho
+  'carga', 'sobrecarga', 'ritmo', 'prazo', 'prazos', 'pressão', 'demanda',
+  'demandas', 'tempo', 'horas', 'horário', 'jornada',
+  
+  // Condições de trabalho e infraestrutura
+  'infraestrutura', 'estrutura', 'recursos', 'ferramenta', 'ferramentas',
+  'equipamento', 'equipamentos', 'espaço', 'instalação', 'instalações',
+  
+  // Desenvolvimento e crescimento
+  'desenvolvimento', 'crescimento', 'carreira', 'oportunidade', 'oportunidades',
+  'capacitação', 'treinamento', 'treinamentos', 'curso', 'cursos',
+  'aprendizado', 'conhecimento', 'promoção',
+  
+  // Equilíbrio vida pessoal/profissional
+  'equilíbrio', 'flexibilidade', 'home', 'office', 'remoto', 'presencial',
+  'família', 'pessoal', 'saúde', 'bem-estar', 'qualidade',
+  
+  // Remuneração e benefícios
+  'salário', 'remuneração', 'benefício', 'benefícios', 'plano', 'vale',
+  'auxílio', 'bonificação', 'participação'
 ]);
 
 export function parseHappinessLevel(text: string): number {
@@ -18,13 +66,15 @@ export function parseHappinessLevel(text: string): number {
 
 export function processWordFrequency(comments: string[]): { text: string; value: number }[] {
   const wordCount: { [key: string]: number } = {};
+  const MIN_FREQUENCY = 3; // Frequência mínima para incluir palavra
   
   comments.forEach(comment => {
     if (!comment || comment.trim() === '') return;
     
     const words = comment
       .toLowerCase()
-      .replace(/[^\wÀ-ÿ\s]/g, ' ')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos para melhor agrupamento
+      .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
       .filter(word => word.length > 3 && !stopWords.has(word));
     
@@ -33,10 +83,25 @@ export function processWordFrequency(comments: string[]): { text: string; value:
     });
   });
   
-  return Object.entries(wordCount)
-    .map(([text, value]) => ({ text, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 50);
+  // Filtra palavras com frequência mínima e prioriza termos relevantes
+  const filteredWords = Object.entries(wordCount)
+    .filter(([_, count]) => count >= MIN_FREQUENCY)
+    .map(([text, value]) => {
+      // Aumenta o peso de palavras relevantes para destacá-las
+      const isRelevant = relevantTerms.has(text);
+      const adjustedValue = isRelevant ? value * 1.5 : value;
+      
+      return { 
+        text, 
+        value,
+        displayValue: adjustedValue,
+        isRelevant 
+      };
+    })
+    .sort((a, b) => b.displayValue - a.displayValue)
+    .slice(0, 80); // Aumenta limite para 80 palavras
+  
+  return filteredWords.map(({ text, value }) => ({ text, value }));
 }
 
 export function processData(responses: SurveyResponse[]): ProcessedData {

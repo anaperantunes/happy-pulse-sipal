@@ -14,13 +14,39 @@ export function WordCloudChart({ data }: WordCloudChartProps) {
   const maxValue = Math.max(...data.map(d => d.value), 1);
   
   const words = useMemo(() => {
-    return data.slice(0, 40).map((word, index) => {
-      const size = Math.max(12, (word.value / maxValue) * 48);
-      const hue = (index * 30) % 360;
+    // Termos críticos que devem ter destaque visual adicional
+    const criticalTerms = new Set([
+      'lideranca', 'lider', 'gestao', 'gestor', 'reconhecimento', 'valorizacao',
+      'comunicacao', 'sobrecarga', 'carga', 'pressao', 'salario', 'remuneracao',
+      'desenvolvimento', 'oportunidade', 'crescimento', 'equilibrio', 'flexibilidade'
+    ]);
+    
+    return data.map((word, index) => {
+      const normalizedWord = word.text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const isCritical = criticalTerms.has(normalizedWord);
+      
+      // Ajusta tamanho com base na relevância
+      const baseSizeMultiplier = isCritical ? 56 : 48;
+      const size = Math.max(14, (word.value / maxValue) * baseSizeMultiplier);
+      
+      // Esquema de cores por categoria
+      let color;
+      if (isCritical) {
+        // Termos críticos em tons mais fortes (vermelho/laranja para atenção)
+        color = `hsl(${10 + (index * 15) % 40}, 75%, 45%)`;
+      } else if (word.value >= maxValue * 0.6) {
+        // Termos muito frequentes em azul/roxo
+        color = `hsl(${220 + (index * 20) % 60}, 65%, 50%)`;
+      } else {
+        // Demais termos em tons variados
+        color = `hsl(${(index * 35) % 360}, 60%, 50%)`;
+      }
+      
       return {
         ...word,
         size,
-        color: `hsl(${hue}, 70%, 50%)`
+        color,
+        isCritical
       };
     });
   }, [data, maxValue]);
@@ -65,19 +91,20 @@ export function WordCloudChart({ data }: WordCloudChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-3 justify-center items-center min-h-[300px] p-4">
+        <div className="flex flex-wrap gap-3 justify-center items-center min-h-[400px] p-6">
           {words.map((word, index) => (
             <span
               key={index}
               style={{
                 fontSize: `${word.size}px`,
                 color: word.color,
-                fontWeight: Math.min(900, 400 + word.value * 50),
-                opacity: 0.7 + (word.value / maxValue) * 0.3,
-                transition: "all 0.3s ease"
+                fontWeight: word.isCritical ? 700 : Math.min(700, 400 + word.value * 40),
+                opacity: word.isCritical ? 0.95 : 0.75 + (word.value / maxValue) * 0.2,
+                transition: "all 0.3s ease",
+                textShadow: word.isCritical ? '0 0 8px rgba(0,0,0,0.1)' : 'none'
               }}
               className="cursor-pointer hover:opacity-100 hover:scale-110"
-              title={`${word.text}: ${word.value} menções`}
+              title={`${word.text}: ${word.value} menções${word.isCritical ? ' (termo prioritário)' : ''}`}
             >
               {word.text}
             </span>
