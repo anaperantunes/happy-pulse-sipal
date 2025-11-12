@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Smile } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from "recharts";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { useRef } from "react";
@@ -9,6 +10,41 @@ import { useRef } from "react";
 interface HappinessFactorsChartProps {
   data: { fator: string; count: number }[];
 }
+
+const CustomizedTick = (props: any) => {
+  const { x, y, payload } = props;
+  const maxLength = 20;
+  const text = payload.value;
+  const truncated = text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+  
+  return (
+    <TooltipProvider delayDuration={100}>
+      <UITooltip>
+        <TooltipTrigger asChild>
+          <g transform={`translate(${x},${y})`}>
+            <text
+              x={0}
+              y={0}
+              dy={16}
+              textAnchor="end"
+              fill="hsl(var(--muted-foreground))"
+              transform="rotate(-45)"
+              fontSize={11}
+              style={{ cursor: text.length > maxLength ? 'help' : 'default' }}
+            >
+              {truncated}
+            </text>
+          </g>
+        </TooltipTrigger>
+        {text.length > maxLength && (
+          <TooltipContent side="top" className="max-w-xs">
+            <p>{text}</p>
+          </TooltipContent>
+        )}
+      </UITooltip>
+    </TooltipProvider>
+  );
+};
 
 export function HappinessFactorsChart({ data }: HappinessFactorsChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -66,11 +102,9 @@ export function HappinessFactorsChart({ data }: HappinessFactorsChartProps) {
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 
               dataKey="fator" 
-              angle={-45}
-              textAnchor="end"
               height={100}
               stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 11 }}
+              tick={<CustomizedTick />}
             />
             <YAxis stroke="hsl(var(--muted-foreground))" />
             <Tooltip 
