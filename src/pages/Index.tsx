@@ -122,15 +122,12 @@ const Index = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Filters and Update Button */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="max-w-xs">
-                <FilterPanel
-                  selectedUnit={selectedUnit}
-                  onUnitChange={setSelectedUnit}
-                />
-              </div>
-              <FileUpload onDataLoaded={handleDataLoaded} compact />
+            {/* Filters */}
+            <div className="max-w-xs">
+              <FilterPanel
+                selectedUnit={selectedUnit}
+                onUnitChange={setSelectedUnit}
+              />
             </div>
 
             {/* KPI Cards */}
@@ -177,17 +174,24 @@ const Index = () => {
         )}
       </main>
 
-      {/* Footer with last update info */}
-      {lastUpdate && (
-        <footer className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-sm border-t border-border/50 py-2">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              <span>Última atualização: {formatLastUpdate(lastUpdate)}</span>
+      {/* Footer with last update info and update button */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-sm border-t border-border/50 py-2">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {lastUpdate && (
+                <>
+                  <Calendar className="h-3 w-3" />
+                  <span>Última atualização: {formatLastUpdate(lastUpdate)}</span>
+                </>
+              )}
             </div>
+            {responses.length > 0 && (
+              <FileUpload onDataLoaded={handleDataLoaded} compact />
+            )}
           </div>
-        </footer>
-      )}
+        </div>
+      </footer>
     </div>
   );
 };
