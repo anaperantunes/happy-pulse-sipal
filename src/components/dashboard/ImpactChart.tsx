@@ -93,17 +93,17 @@ export function ImpactChart({ data }: ImpactChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sortedData} margin={{ bottom: 80 }}>
+        <ResponsiveContainer width="100%" height={350}>
+          <BarChart data={sortedData} margin={{ left: 20, right: 20, bottom: 100 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 
               dataKey="impacto" 
               angle={-45}
               textAnchor="end"
-              height={100}
+              height={120}
               stroke="hsl(var(--muted-foreground))"
               interval={0}
-              tickMargin={8}
+              tickMargin={10}
               tick={<CustomizedTick />}
             />
             <YAxis stroke="hsl(var(--muted-foreground))" />
