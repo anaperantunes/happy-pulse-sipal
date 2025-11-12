@@ -38,6 +38,7 @@ export function UnhappinessFactorsChart({ data }: UnhappinessFactorsChartProps) 
   const chartRef = useRef<HTMLDivElement>(null);
   
   const total = data.reduce((sum, d) => sum + d.count, 0);
+  const maxValue = Math.max(...data.map(d => d.count));
   
   const chartData = data.map(d => ({
     ...d,
@@ -98,7 +99,10 @@ export function UnhappinessFactorsChart({ data }: UnhappinessFactorsChartProps) 
               tickMargin={8}
               tick={<CustomizedTick />}
             />
-            <YAxis stroke="hsl(var(--muted-foreground))" />
+            <YAxis 
+              stroke="hsl(var(--muted-foreground))"
+              domain={[0, maxValue + 15]}
+            />
             <Tooltip 
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",

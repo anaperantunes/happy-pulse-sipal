@@ -23,6 +23,8 @@ const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981"];
 export function HappinessChart({ data }: HappinessChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   
+  const maxValue = Math.max(...data.map(d => d.count));
+  
   const chartData = data.map(d => ({
     ...d,
     label: HAPPINESS_LABELS[d.nivel as keyof typeof HAPPINESS_LABELS],
@@ -73,7 +75,11 @@ export function HappinessChart({ data }: HappinessChartProps) {
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={chartData} layout="vertical" margin={{ left: 80, right: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
+            <XAxis 
+              type="number" 
+              stroke="hsl(var(--muted-foreground))"
+              domain={[0, maxValue + 15]}
+            />
             <YAxis 
               dataKey="label" 
               type="category" 
