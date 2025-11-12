@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Heart, TrendingUp, Users, MessageSquare } from "lucide-react";
+import logoSipal from "@/assets/logo-sipal.png";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { HappinessChart } from "@/components/dashboard/HappinessChart";
 import { ImpactChart } from "@/components/dashboard/ImpactChart";
@@ -34,7 +35,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-primary">
                 Pesquisa de Felicidade no Trabalho
@@ -43,6 +44,11 @@ const Index = () => {
                 Dashboard SIPAL - Análise em tempo real
               </p>
             </div>
+            <img 
+              src={logoSipal} 
+              alt="Logo SIPAL" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
         </div>
       </header>

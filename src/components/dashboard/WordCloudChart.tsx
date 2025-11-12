@@ -1,11 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import { useMemo, useRef } from "react";
 
 interface WordCloudChartProps {
   data: { text: string; value: number }[];
 }
 
 export function WordCloudChart({ data }: WordCloudChartProps) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const maxValue = Math.max(...data.map(d => d.value), 1);
   
   const words = useMemo(() => {
@@ -20,12 +25,44 @@ export function WordCloudChart({ data }: WordCloudChartProps) {
     });
   }, [data, maxValue]);
 
+  const exportChart = async (format: 'png' | 'pdf') => {
+    if (!chartRef.current) return;
+    
+    const canvas = await html2canvas(chartRef.current);
+    
+    if (format === 'png') {
+      const link = document.createElement('a');
+      link.download = 'nuvem-palavras.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    } else {
+      const pdf = new jsPDF();
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save('nuvem-palavras.pdf');
+    }
+  };
+
   return (
-    <Card className="shadow-sm">
+    <Card className="shadow-sm" ref={chartRef}>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">
-          Principais Termos nas Respostas Abertas
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-foreground">
+            Principais Termos nas Respostas Abertas
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportChart('png')}>
+              <Download className="w-4 h-4 mr-1" />
+              PNG
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportChart('pdf')}>
+              <Download className="w-4 h-4 mr-1" />
+              PDF
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-3 justify-center items-center min-h-[300px] p-4">
