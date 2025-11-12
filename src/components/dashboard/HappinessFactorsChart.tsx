@@ -70,7 +70,7 @@ export function HappinessFactorsChart({ data }: HappinessFactorsChartProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Smile className="h-5 w-5 text-primary" />
-            Top 5 Motivos de Felicidade
+            Top 5 Fatores mais felicidade
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => exportChart('png')}>
