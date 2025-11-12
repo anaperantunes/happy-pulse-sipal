@@ -70,7 +70,7 @@ export function UnhappinessFactorsChart({ data }: UnhappinessFactorsChartProps) 
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Frown className="h-5 w-5 text-destructive" />
-            Top 5 Motivos de Infelicidade
+            Top 5 fatores menos felicidade
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => exportChart('png')}>
