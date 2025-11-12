@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Heart, TrendingUp, Users, MessageSquare, Calendar, LogOut } from "lucide-react";
+import { Heart, TrendingUp, Users, MessageSquare, Calendar } from "lucide-react";
 import logoSipal from "@/assets/logo-sipal.png";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { HappinessChart } from "@/components/dashboard/HappinessChart";
@@ -11,21 +11,14 @@ import { FileUpload } from "@/components/dashboard/FileUpload";
 import { SurveyResponse } from "@/types/survey";
 import { processData } from "@/utils/dataProcessor";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { AuthDialog } from "@/components/auth/AuthDialog";
-import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<string>("all");
   const [lastUpdate, setLastUpdate] = useState<string>("");
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const { user, loading: authLoading, signOut } = useAuth();
 
   // Load data from Supabase
   useEffect(() => {
-    if (!user) return;
-
     const loadData = async () => {
       // Load responses
       const { data: responsesData, error: responsesError } = await supabase
@@ -44,7 +37,7 @@ const Index = () => {
         .select('*')
         .order('last_updated', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!metadataError && metadataData) {
         setLastUpdate(metadataData.last_updated);
@@ -65,7 +58,7 @@ const Index = () => {
     };
 
     loadData();
-  }, [user]);
+  }, []);
 
   const handleDataLoaded = (data: SurveyResponse[], timestamp: string) => {
     setResponses(data);
@@ -99,36 +92,6 @@ const Index = () => {
     ? ((processedData.happinessDistribution.filter(h => h.nivel >= 4).reduce((sum, h) => sum + h.count, 0) / totalResponses) * 100).toFixed(1)
     : "0.0";
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <>
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/30 to-background">
-          <div className="text-center space-y-4 max-w-md">
-            <img src={logoSipal} alt="Logo SIPAL" className="h-20 mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-primary">
-              Pesquisa de Felicidade no Trabalho
-            </h1>
-            <p className="text-muted-foreground">
-              Dashboard SIPAL - Análise em tempo real
-            </p>
-            <Button onClick={() => setShowAuthDialog(true)} size="lg" className="mt-6">
-              Fazer Login
-            </Button>
-          </div>
-        </div>
-        <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
-      </>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background">
       {/* Header */}
@@ -143,17 +106,11 @@ const Index = () => {
                 Dashboard SIPAL - Análise em tempo real
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sair
-              </Button>
-              <img 
-                src={logoSipal} 
-                alt="Logo SIPAL" 
-                className="h-16 w-auto object-contain"
-              />
-            </div>
+            <img 
+              src={logoSipal} 
+              alt="Logo SIPAL" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
         </div>
       </header>
