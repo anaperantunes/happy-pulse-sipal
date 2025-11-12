@@ -85,7 +85,7 @@ export function HappinessFactorsChart({ data }: HappinessFactorsChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart data={chartData} margin={{ left: 20, right: 20, bottom: 80 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 
