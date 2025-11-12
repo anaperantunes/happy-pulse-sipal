@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Heart, TrendingUp, Users, MessageSquare } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Heart, TrendingUp, Users, MessageSquare, Calendar } from "lucide-react";
 import logoSipal from "@/assets/logo-sipal.png";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { HappinessChart } from "@/components/dashboard/HappinessChart";
@@ -14,6 +14,40 @@ import { processData } from "@/utils/dataProcessor";
 const Index = () => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<string>("all");
+  const [lastUpdate, setLastUpdate] = useState<string>("");
+
+  // Load saved data on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('surveyData');
+    const savedTimestamp = localStorage.getItem('surveyDataTimestamp');
+    
+    if (savedData && savedTimestamp) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setResponses(parsedData);
+        setLastUpdate(savedTimestamp);
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
+  }, []);
+
+  const handleDataLoaded = (data: SurveyResponse[], timestamp: string) => {
+    setResponses(data);
+    setLastUpdate(timestamp);
+  };
+
+  const formatLastUpdate = (timestamp: string) => {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   const filteredResponses = useMemo(() => {
     if (selectedUnit === "all") return responses;
@@ -53,19 +87,22 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-16">
         {responses.length === 0 ? (
           <div className="max-w-2xl mx-auto">
-            <FileUpload onDataLoaded={setResponses} />
+            <FileUpload onDataLoaded={handleDataLoaded} />
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Filters */}
-            <div className="max-w-xs">
-              <FilterPanel
-                selectedUnit={selectedUnit}
-                onUnitChange={setSelectedUnit}
-              />
+            {/* Filters and Update Button */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="max-w-xs">
+                <FilterPanel
+                  selectedUnit={selectedUnit}
+                  onUnitChange={setSelectedUnit}
+                />
+              </div>
+              <FileUpload onDataLoaded={handleDataLoaded} compact />
             </div>
 
             {/* KPI Cards */}
@@ -106,16 +143,23 @@ const Index = () => {
                   <UnitDistributionChart data={processedData.unitDistribution} />
                   <WordCloudChart data={processedData.wordFrequency} />
                 </div>
-
-                {/* Upload new file */}
-                <div className="mt-8 pt-8 border-t border-border">
-                  <FileUpload onDataLoaded={setResponses} />
-                </div>
               </>
             )}
           </div>
         )}
       </main>
+
+      {/* Footer with last update info */}
+      {lastUpdate && (
+        <footer className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-sm border-t border-border/50 py-2">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              <span>Última atualização: {formatLastUpdate(lastUpdate)}</span>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   );
 };

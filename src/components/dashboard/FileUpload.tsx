@@ -1,17 +1,17 @@
 import { useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import { SurveyResponse } from "@/types/survey";
 import { parseHappinessLevel } from "@/utils/dataProcessor";
 
 interface FileUploadProps {
-  onDataLoaded: (data: SurveyResponse[]) => void;
+  onDataLoaded: (data: SurveyResponse[], timestamp: string) => void;
+  compact?: boolean;
 }
 
-export function FileUpload({ onDataLoaded }: FileUploadProps) {
+export function FileUpload({ onDataLoaded, compact = false }: FileUploadProps) {
   const { toast } = useToast();
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +50,13 @@ export function FileUpload({ onDataLoaded }: FileUploadProps) {
         });
 
         if (allResponses.length > 0) {
-          onDataLoaded(allResponses);
+          const timestamp = new Date().toISOString();
+          
+          // Save to localStorage
+          localStorage.setItem('surveyData', JSON.stringify(allResponses));
+          localStorage.setItem('surveyDataTimestamp', timestamp);
+          
+          onDataLoaded(allResponses, timestamp);
           toast({
             title: "Arquivo carregado!",
             description: `${allResponses.length} respostas processadas com sucesso.`,
@@ -74,33 +80,42 @@ export function FileUpload({ onDataLoaded }: FileUploadProps) {
     reader.readAsArrayBuffer(file);
   }, [onDataLoaded, toast]);
 
+  if (compact) {
+    return (
+      <Button asChild variant="outline" size="sm">
+        <label className="cursor-pointer">
+          <Upload className="mr-2 h-4 w-4" />
+          Atualizar Base
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </label>
+      </Button>
+    );
+  }
+
   return (
-    <Card className="shadow-sm border-dashed border-2 border-primary/30 hover:border-primary/50 transition-colors">
-      <CardContent className="pt-6">
-        <div className="flex flex-col items-center justify-center gap-4 py-8">
-          <div className="rounded-full bg-primary/10 p-6">
-            <FileSpreadsheet className="h-12 w-12 text-primary" />
-          </div>
-          <div className="text-center">
-            <h3 className="font-semibold text-lg mb-2">Carregar Base Atualizada</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Selecione o arquivo Excel com as respostas da pesquisa
-            </p>
-          </div>
-          <Button asChild className="bg-primary hover:bg-primary/90">
-            <label className="cursor-pointer">
-              <Upload className="mr-2 h-4 w-4" />
-              Escolher Arquivo
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-center gap-4 py-6">
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Carregue o arquivo Excel com as respostas da pesquisa
+        </p>
+      </div>
+      <Button asChild className="bg-primary hover:bg-primary/90">
+        <label className="cursor-pointer">
+          <Upload className="mr-2 h-4 w-4" />
+          Escolher Arquivo
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </label>
+      </Button>
+    </div>
   );
 }
