@@ -106,7 +106,11 @@ export function ImpactChart({ data }: ImpactChartProps) {
               tickMargin={10}
               tick={<CustomizedTick />}
             />
-            <YAxis stroke="hsl(var(--muted-foreground))" />
+            <YAxis 
+              stroke="hsl(var(--muted-foreground))"
+              domain={[0, 'auto']}
+              allowDataOverflow={false}
+            />
             <Tooltip 
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
