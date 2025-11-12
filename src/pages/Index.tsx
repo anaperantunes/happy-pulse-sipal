@@ -16,6 +16,7 @@ const Index = () => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<string>("all");
   const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [showComments, setShowComments] = useState<boolean>(false);
 
   // Load data from Supabase
   useEffect(() => {
@@ -153,8 +154,49 @@ const Index = () => {
                 title="Comentários Recebidos"
                 value={filteredResponses.filter(r => r.comentarios && r.comentarios.trim() !== "").length}
                 icon={MessageSquare}
+                onClick={() => setShowComments(!showComments)}
               />
             </div>
+
+            {/* Comments Section */}
+            {showComments && (
+              <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Comentários dos Colaboradores
+                  </h2>
+                  <button 
+                    onClick={() => setShowComments(false)}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                  {filteredResponses
+                    .filter(r => r.comentarios && r.comentarios.trim() !== "")
+                    .map((response, index) => (
+                      <div 
+                        key={index}
+                        className="bg-muted/30 rounded-lg p-4 border border-border/50"
+                      >
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <span className="text-sm font-medium text-primary">
+                            {response.local}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Felicidade: {response.felicidade}/5
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">
+                          {response.comentarios}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
 
             {/* Charts */}
             {processedData && (
