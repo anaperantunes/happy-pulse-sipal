@@ -67,7 +67,7 @@ export function WordCloudChart({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-foreground">
-            Principais temas mencionados na pergunta aberta
+            Sugestões e Melhorias - Principais temas mencionados na pergunta aberta
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => exportChart('png')}>
