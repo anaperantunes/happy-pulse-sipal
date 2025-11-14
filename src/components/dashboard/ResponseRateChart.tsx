@@ -1,42 +1,65 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 interface ResponseRateChartProps {
   responses: Array<{ tipo_unidade: "Matriz" | "Filial" }>;
 }
 
-const TOTAL_MATRIZ = 368;
-const TOTAL_FILIAIS = 722;
-const TOTAL_GERAL = 1090;
-
 export function ResponseRateChart({ responses }: ResponseRateChartProps) {
+  const [employeeCounts, setEmployeeCounts] = useState({
+    matriz: 368,
+    filiais: 722,
+    geral: 1090
+  });
+
+  useEffect(() => {
+    const fetchEmployeeCounts = async () => {
+      const { data, error } = await supabase
+        .from('employee_counts')
+        .select('tipo, total_colaboradores');
+
+      if (!error && data) {
+        const counts = {
+          matriz: data.find(d => d.tipo === 'Matriz')?.total_colaboradores || 368,
+          filiais: data.find(d => d.tipo === 'Filiais')?.total_colaboradores || 722,
+          geral: data.find(d => d.tipo === 'Geral')?.total_colaboradores || 1090
+        };
+        setEmployeeCounts(counts);
+      }
+    };
+
+    fetchEmployeeCounts();
+  }, []);
+
   const matrizCount = responses.filter(r => r.tipo_unidade === "Matriz").length;
   const filiaisCount = responses.filter(r => r.tipo_unidade === "Filial").length;
   const totalCount = responses.length;
 
-  const geralRate = (totalCount / TOTAL_GERAL) * 100;
-  const matrizRate = (matrizCount / TOTAL_MATRIZ) * 100;
-  const filiaisRate = (filiaisCount / TOTAL_FILIAIS) * 100;
+  const geralRate = (totalCount / employeeCounts.geral) * 100;
+  const matrizRate = (matrizCount / employeeCounts.matriz) * 100;
+  const filiaisRate = (filiaisCount / employeeCounts.filiais) * 100;
 
   const data = [
     {
       categoria: "Geral",
       taxa: parseFloat(geralRate.toFixed(2)),
       respondentes: totalCount,
-      total: TOTAL_GERAL
+      total: employeeCounts.geral
     },
     {
       categoria: "Matriz",
       taxa: parseFloat(matrizRate.toFixed(2)),
       respondentes: matrizCount,
-      total: TOTAL_MATRIZ
+      total: employeeCounts.matriz
     },
     {
       categoria: "Filiais",
       taxa: parseFloat(filiaisRate.toFixed(2)),
       respondentes: filiaisCount,
-      total: TOTAL_FILIAIS
+      total: employeeCounts.filiais
     }
   ];
 

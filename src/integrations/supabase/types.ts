@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      employee_counts: {
+        Row: {
+          created_at: string
+          id: string
+          tipo: string
+          total_colaboradores: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tipo: string
+          total_colaboradores: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tipo?: string
+          total_colaboradores?: number
+        }
+        Relationships: []
+      }
       survey_metadata: {
         Row: {
           id: string
