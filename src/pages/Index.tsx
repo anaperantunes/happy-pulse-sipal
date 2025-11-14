@@ -8,6 +8,7 @@ import { UnitDistributionChart } from "@/components/dashboard/UnitDistributionCh
 import { WordCloudChart } from "@/components/dashboard/WordCloudChart";
 import { HappinessFactorsChart } from "@/components/dashboard/HappinessFactorsChart";
 import { UnhappinessFactorsChart } from "@/components/dashboard/UnhappinessFactorsChart";
+import { ResponseRateChart } from "@/components/dashboard/ResponseRateChart";
 import { FilterPanel } from "@/components/dashboard/FilterPanel";
 import { FileUpload } from "@/components/dashboard/FileUpload";
 import { SurveyResponse } from "@/types/survey";
@@ -118,6 +119,9 @@ const Index = () => {
               <MetricCard title="Total de Respostas" value={totalResponses} icon={Users} />
               <MetricCard title="Comentários Recebidos" value={filteredResponses.filter(r => r.comentarios && r.comentarios.trim() !== "").length} icon={MessageSquare} onClick={() => setShowComments(!showComments)} />
             </div>
+
+            {/* Response Rate Chart */}
+            <ResponseRateChart responses={filteredResponses} />
 
             {/* Comments Section */}
             {showComments && <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
