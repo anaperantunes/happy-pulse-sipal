@@ -7,8 +7,8 @@ interface ResponseRateChartProps {
 }
 
 const TOTAL_MATRIZ = 368;
-const TOTAL_FILIAIS = 994;
-const TOTAL_GERAL = 1362;
+const TOTAL_FILIAIS = 722;
+const TOTAL_GERAL = 1090;
 
 export function ResponseRateChart({ responses }: ResponseRateChartProps) {
   const matrizCount = responses.filter(r => r.tipo_unidade === "Matriz").length;
