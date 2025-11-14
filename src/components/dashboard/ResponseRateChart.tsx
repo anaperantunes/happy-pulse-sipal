@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 interface ResponseRateChartProps {
-  responses: Array<{ tipo_unidade: "Matriz" | "Filial" }>;
+  responses: Array<{ local: "Matriz" | "Filial" }>;
 }
 
 export function ResponseRateChart({ responses }: ResponseRateChartProps) {
@@ -34,8 +34,8 @@ export function ResponseRateChart({ responses }: ResponseRateChartProps) {
     fetchEmployeeCounts();
   }, []);
 
-  const matrizCount = responses.filter(r => r.tipo_unidade === "Matriz").length;
-  const filiaisCount = responses.filter(r => r.tipo_unidade === "Filial").length;
+  const matrizCount = responses.filter(r => r.local === "Matriz").length;
+  const filiaisCount = responses.filter(r => r.local === "Filial").length;
   const totalCount = responses.length;
 
   const geralRate = (totalCount / employeeCounts.geral) * 100;

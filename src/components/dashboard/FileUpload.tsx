@@ -87,8 +87,13 @@ export function FileUpload({ onDataLoaded, compact = false }: FileUploadProps) {
             // Sanitize strings to prevent formula injection
             const sanitize = (str: string) => typeof str === 'string' ? str.replace(/^[=+\-@]/g, "'") : str;
             
+            const localValue = sanitize((Object.values(row)[0] as string) || tipoUnidade);
+            const normalizedLocal = (localValue === "Matriz" || localValue === "Filial") 
+              ? localValue 
+              : tipoUnidade;
+            
             allResponses.push({
-              local: sanitize((Object.values(row)[0] as string) || tipoUnidade),
+              local: normalizedLocal as "Matriz" | "Filial",
               felicidade,
               fatoresPositivos: sanitize((Object.values(row)[2] as string) || ""),
               fatoresNegativos: sanitize((Object.values(row)[3] as string) || ""),

@@ -132,7 +132,7 @@ export function processData(responses: SurveyResponse[]): ProcessedData {
   
   const unitCount: { [key: string]: number } = {};
   responses.forEach(r => {
-    unitCount[r.tipo_unidade] = (unitCount[r.tipo_unidade] || 0) + 1;
+    unitCount[r.local] = (unitCount[r.local] || 0) + 1;
   });
   
   const unitDistribution = Object.entries(unitCount).map(([unidade, count]) => ({
