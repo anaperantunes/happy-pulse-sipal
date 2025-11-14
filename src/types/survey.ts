@@ -1,11 +1,11 @@
 export interface SurveyResponse {
-  local: string;
+  local: "Matriz" | "Filial";
   felicidade: number;
   fatoresPositivos: string;
   fatoresNegativos: string;
   impacto: string;
   comentarios: string;
-  tipo_unidade: "Matriz" | "Filial";
+  tipo_unidade: string;
 }
 
 export interface ProcessedData {

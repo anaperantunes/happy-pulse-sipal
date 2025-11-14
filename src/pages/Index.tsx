@@ -47,13 +47,13 @@ const Index = () => {
       }
       if (responsesData) {
         const mappedResponses: SurveyResponse[] = responsesData.map(r => ({
-          local: r.local,
+          local: r.local as "Matriz" | "Filial",
           felicidade: r.felicidade,
           fatoresPositivos: r.fatores_positivos || "",
           fatoresNegativos: r.fatores_negativos || "",
           impacto: r.impacto || "",
           comentarios: r.comentarios || "",
-          tipo_unidade: r.tipo_unidade as "Matriz" | "Filial"
+          tipo_unidade: r.tipo_unidade
         }));
         setResponses(mappedResponses);
       }
@@ -77,7 +77,7 @@ const Index = () => {
   };
   const filteredResponses = useMemo(() => {
     if (selectedUnit === "all") return responses;
-    return responses.filter(r => r.tipo_unidade === selectedUnit);
+    return responses.filter(r => r.local === selectedUnit);
   }, [responses, selectedUnit]);
   const processedData = useMemo(() => {
     if (filteredResponses.length === 0) return null;
